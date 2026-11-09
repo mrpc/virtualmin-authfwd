@@ -1,0 +1,16 @@
+<header>Forward authenticated mail to</header>
+Addresses that receive a copy of every message delivered to this mailbox,
+<b>except</b> messages from an external sender domain that carry no valid
+DKIM signature.<p>
+
+Forwarding keeps the original envelope sender, so the receiving provider
+checks SPF against this server and fails it. Such a message is accepted only
+if it has a valid DKIM signature; without one, Gmail, Outlook and Yahoo reject
+it (for example <tt>550 5.7.26</tt>). Those rejections are almost always spam
+and they damage the reputation of this server's IP, so this plugin does not
+send them. Mail from domains hosted here, bounces, and messages whose DKIM
+check fails temporarily are always forwarded.<p>
+
+The local mailbox always receives every message. Decisions are logged to
+syslog with the tag <tt>authfwd</tt>.
+<footer>

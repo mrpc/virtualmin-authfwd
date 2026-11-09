@@ -1,0 +1,11 @@
+feat_name=Authenticated forwarding
+mail_targets=Forward authenticated mail to
+mail_targets_desc=One address per line. A copy is forwarded unless the sender is external and the message has no valid DKIM signature (mail that Gmail, Outlook and Yahoo reject as unauthenticated). The local mailbox always keeps every message.
+mail_header=Authenticated forwards
+err_addr=Invalid forwarding address: $1
+err_local=$1 is in a domain hosted on this server. Use a normal Virtualmin forward for local addresses.
+err_dup=$1 is also a normal Virtualmin forwarding destination of this mailbox, so it would receive every message twice. Remove it from one of the two.
+check_failed=Authenticated forwarding cannot be used
+check_procmail=Procmail is not installed
+check_postfix=Only Postfix mail servers are supported
+check_dkim=The Perl module Mail::DKIM is not installed (Debian/Ubuntu: libmail-dkim-perl, RHEL/Alma/Rocky: perl-Mail-DKIM)

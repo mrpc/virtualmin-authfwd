@@ -1,0 +1,124 @@
+#!/usr/bin/perl
+# authfwd - forward a copy of a locally delivered message to external
+# addresses, skipping only mail that the receiving provider would reject
+# anyway as unauthenticated: an external sender domain with no passing
+# DKIM signature (Gmail: "550 5.7.26 ... authenticate with SPF or DKIM").
+#
+# Called by procmail (:0c recipe installed by the Virtualmin plugin), so the
+# local copy is always delivered regardless of what this script does.
+#
+# Config: /etc/authfwd/forwards (or $AUTHFWD_CONF), one line per mailbox:
+#   <mailbox unix user> <address> [<address> ...]
+# Log:    syslog, facility mail, tag "authfwd" (FWD / SKIP / FAIL lines).
+# Test:   AUTHFWD_DRYRUN=1 LOGNAME=<user> authfwd < message
+#
+# Part of virtualmin-authfwd. License: GPL-3.0-or-later.
+use strict;
+use warnings;
+use Sys::Syslog qw(openlog syslog);
+use Mail::DKIM::Verifier;
+
+# Some Net::DNS versions warn about resolv.conf keywords they do not parse.
+$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /^unresolvable name:/ };
+
+my $conf = $ENV{AUTHFWD_CONF} || '/etc/authfwd/forwards';
+my $dry  = $ENV{AUTHFWD_DRYRUN};
+my $user = $ENV{LOGNAME} // '';
+openlog('authfwd', 'pid', 'mail');
+
+my @targets = targets_for($conf, $user);
+my %local = local_domains();
+# Loop guard: never forward into a domain hosted here (it would re-enter
+# procmail); the plugin refuses such addresses, this covers manual edits.
+@targets = grep { my ($d) = /\@([^@\s]+)$/; $d && !is_local(lc $d, \%local) } @targets;
+exit 0 unless @targets;
+
+my $msg = do { local $/; <STDIN> } // '';
+$msg =~ s/\AFrom [^\n]*\n//;    # procmail mbox separator line
+my ($hdr) = split /\r?\n\r?\n/, $msg, 2;
+$hdr //= '';
+
+my $sender = $ENV{SENDER};
+($sender) = $hdr =~ /^Return-Path:\s*<([^>]*)>/mi if !defined $sender;
+$sender //= '';
+my ($sdom) = $sender =~ /\@([^@\s]+)$/;
+$sdom = lc($sdom // '');
+
+my $reason = decide($msg, $sender, $sdom, \%local);
+
+if (!$reason) {
+    my ($mid) = $hdr =~ /^Message-ID:\s*(\S+)/mi;
+    if ($dry) { print "SKIP from=<$sender>\n"; exit 0 }
+    syslog('info', 'SKIP user=%s from=<%s> msgid=%s reason=unauthenticated external sender',
+        $user, $sender, $mid // '-');
+    exit 0;
+}
+if ($dry) { print "FWD from=<$sender> reason=$reason\n"; exit 0 }
+
+open my $sm, '|-', '/usr/sbin/sendmail', '-oi', '-f', $sender, '--', @targets
+    or do { syslog('err', 'FAIL user=%s cannot run sendmail: %s', $user, $!); exit 0 };
+print $sm $msg;
+if (close $sm) {
+    syslog('info', 'FWD user=%s from=<%s> to=%s reason=%s', $user, $sender, join(',', @targets), $reason);
+} else {
+    syslog('err', 'FAIL user=%s sendmail exit %d', $user, $? >> 8);
+}
+exit 0;
+
+# Returns a reason string if the copy should be forwarded, '' if skipped.
+sub decide {
+    my ($msg, $sender, $sdom, $local) = @_;
+    return 'null sender' if $sender eq '';
+    return "local domain $sdom" if is_local($sdom, $local);
+    my $v = Mail::DKIM::Verifier->new();
+    (my $crlf = $msg) =~ s/\r?\n/\r\n/g;
+    eval { $v->PRINT($crlf); $v->CLOSE(); 1 } or return 'dkim error';
+    my @res = map { $_->result } $v->signatures;
+    return 'dkim pass' if grep { $_ eq 'pass' } @res;
+    return 'dkim temperror' if grep { $_ eq 'temperror' } @res;
+    return '';
+}
+
+sub targets_for {
+    my ($file, $u) = @_;
+    open my $c, '<', $file or return ();
+    while (<$c>) {
+        next if /^\s*(#|$)/;
+        my ($k, @t) = split;
+        return @t if defined $k && $k eq $u;
+    }
+    return ();
+}
+
+# Domains this Postfix server delivers for: mydestination plus the domain
+# keys (entries without "@") of every file-based virtual_alias_maps table.
+sub local_domains {
+    my %d;
+    if (defined $ENV{AUTHFWD_LOCAL_DOMAINS}) {    # for tests
+        $d{lc $_} = 1 for split /[\s,]+/, $ENV{AUTHFWD_LOCAL_DOMAINS};
+        return %d;
+    }
+    my $pc = '/usr/sbin/postconf';
+    return %d unless -x $pc;
+    for my $v (split /[\s,]+/, `$pc -xh mydestination 2>/dev/null` // '') {
+        $d{lc $v} = 1 if $v =~ /\./;
+    }
+    for my $m (split /[\s,]+/, `$pc -xh virtual_alias_maps 2>/dev/null` // '') {
+        my ($path) = $m =~ /^(?:hash|btree|lmdb|cdb|texthash):(\/\S+)$/ or next;
+        open my $f, '<', $path or next;
+        while (<$f>) {
+            $d{lc $1} = 1 if /^([A-Za-z0-9.-]+\.[A-Za-z]+)\s/;
+        }
+    }
+    return %d;
+}
+
+sub is_local {
+    my ($d, $local) = @_;
+    return 0 unless $d;
+    while ($d =~ /\./) {
+        return 1 if $local->{$d};
+        $d =~ s/^[^.]+\.//;
+    }
+    return 0;
+}
