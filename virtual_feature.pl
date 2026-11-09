@@ -34,6 +34,9 @@ sub mailbox_inputs
 my ($user, $new, $dom) = @_;
 return undef if (!$dom || !$dom->{'mail'});
 my @t = $new ? () : &get_forwards($user->{'user'});
+no warnings "once";
+$main::ui_table_cols = 2;	# themes divide by this; not always set yet
+use warnings "once";
 return &ui_table_row(&hlink($text{'mail_targets'}, "targets"),
 		     &ui_textarea($input_name, join("\n", @t), 3, 50).
 		     "<br>".$text{'mail_targets_desc'});
