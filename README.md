@@ -44,6 +44,24 @@ Each decision goes to syslog with the tag `authfwd`:
 journalctl -t authfwd
 ```
 
+## It also avoids the "keep a local copy" mail loop
+
+When a Virtualmin mailbox forwards with **keep a local copy**, Virtualmin
+writes the local copy into the aliases file as `\<unix user>`. If that Unix
+user name contains `@` (user@domain style mailboxes), Postfix does not treat
+it as a local mailbox. It treats it as an address, which maps back to the same
+alias, and every message is forwarded again and again, often dozens of times
+to the external recipient.
+
+With this plugin the mailbox stays a plain mailbox with only local delivery,
+and the plugin sends the copy itself, never to a domain hosted on the server.
+The plugin also:
+
+- shows a warning on the Edit Mailbox page, and marks the mailbox list
+  column, when the normal forwarding of a mailbox has this loop risk;
+- flags such mailboxes as `MAIL LOOP RISK` in `migrate-forwards.pl`, which
+  moves them over.
+
 ## Requirements
 
 - Virtualmin 7 or later, with **Postfix** and **procmail** (the Virtualmin default)

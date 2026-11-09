@@ -148,6 +148,28 @@ return grep { $_ ne '' && !$seen{lc $_}++ }
        map { s/^\s+|\s+$//gr } split(/[\r\n,]+/, $str // '');
 }
 
+# forward_kind(&user) -> ( has_local_copy, loop_risk, @external_addresses )
+# for the mailbox's normal Virtualmin forwarding.
+# Loop risk: Virtualmin writes "keep a local copy" as \<user> in the aliases
+# file. When that local name contains "@" (user@domain style Unix users),
+# Postfix's local(8) does not treat \user@domain as a local mailbox but as
+# an address, which is mapped back to the same alias, so every message is
+# forwarded again and again.
+sub forward_kind
+{
+my ($user) = @_;
+my @to = @{$user->{'to'} || []};
+return (0, 0) if (!@to);
+&foreign_require("virtual-server", "virtual-server-lib.pl");
+my @self = grep { (&virtual_server::alias_type($_, $user->{'user'}))[0] == 10 } @to;
+my $local = scalar(@self);
+my @ext = grep { !/^[\\|\/:.%]/ && /\@([^\@\s]+)$/ && !&is_hosted_domain($1) } @to;
+# The loop needs both: a local copy written as \name@domain, and more targets.
+my $loop = @to > 1 && grep { /^\\\S*\@/ } @self;
+$loop = $loop ? 1 : 0;
+return ($local ? 1 : 0, $loop, @ext);
+}
+
 # is_hosted_domain(domain) -> 1 if Virtualmin hosts this domain
 sub is_hosted_domain
 {

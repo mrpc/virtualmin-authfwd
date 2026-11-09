@@ -15,6 +15,10 @@ normal Virtualmin forward (via C<virtualmin modify-user --del-forward>), so
 each recipient keeps receiving mail exactly once. Limit it to one virtual
 server with C<--domain>.
 
+Mailboxes whose Unix user name contains "@" are flagged "MAIL LOOP RISK": with
+"keep a local copy" Virtualmin makes Postfix forward their mail in a loop.
+Migrating them removes the loop.
+
 Mailboxes that only forward (no local copy) are not touched: the plugin needs
 a local delivery to hook into.
 
@@ -58,14 +62,12 @@ die "No matching virtual servers with email\n" if (!@doms);
 
 my $count = 0;
 foreach my $d (@doms) {
-	foreach my $u (&virtual_server::list_domain_users($d, 0, 1, 1, 1)) {
-		my @to = @{$u->{'to'} || []};
-		next if (!@to);
-		my $local = grep { (&virtual_server::alias_type($_, $u->{'user'}))[0] == 10 } @to;
-		my @ext = grep { !/^[\\|\/:.%]/ && /\@([^\@\s]+)$/ && !&is_hosted_domain($1) } @to;
+	foreach my $u (&virtual_server::list_domain_users($d, 0, 0, 1, 1)) {
+		my ($local, $loop, @ext) = &forward_kind($u);
 		next if (!$local || !@ext);
 		$count++;
 		print "$d->{'dom'}\t$u->{'user'}\t", join(", ", @ext),
+		      ($loop ? "\tMAIL LOOP RISK" : ""),
 		      ($apply ? "\tmigrating" : ""), "\n";
 		next if (!$apply);
 		my @t = &get_forwards($u->{'user'});

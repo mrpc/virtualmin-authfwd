@@ -9,3 +9,6 @@ check_failed=Authenticated forwarding cannot be used
 check_procmail=Procmail is not installed
 check_postfix=Only Postfix mail servers are supported
 check_dkim=The Perl module Mail::DKIM is not installed (Debian/Ubuntu: libmail-dkim-perl, RHEL/Alma/Rocky: perl-Mail-DKIM)
+warn_loop=Warning: this mailbox forwards with "keep a local copy", and its Unix user name contains @. Virtualmin writes this in a way that makes Postfix forward every message again and again (a mail loop). Move the external addresses here and remove them from the normal forwarding, or run migrate-forwards.pl.
+warn_plain=This mailbox also forwards everything, including unauthenticated spam, through normal Virtualmin forwarding to: $1. Moving these addresses here stops spam from being forwarded.
+col_loop=(mail loop risk)

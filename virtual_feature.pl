@@ -37,9 +37,16 @@ my @t = $new ? () : &get_forwards($user->{'user'});
 no warnings "once";
 $main::ui_table_cols = 2;	# themes divide by this; not always set yet
 use warnings "once";
+my $warn = "";
+if (!$new) {
+	my ($local, $loop, @ext) = &forward_kind($user);
+	$warn = "<br><b>".$text{'warn_loop'}."</b>" if ($loop);
+	$warn .= "<br>".&text('warn_plain', &html_escape(join(", ", @ext)))
+		if ($local && @ext && !$loop);
+	}
 return &ui_table_row(&hlink($text{'mail_targets'}, "targets"),
 		     &ui_textarea($input_name, join("\n", @t), 3, 50).
-		     "<br>".$text{'mail_targets_desc'});
+		     "<br>".$text{'mail_targets_desc'}.$warn);
 }
 
 # mailbox_validate(&user, &olduser, &in, new, &domain) - error or undef
@@ -106,7 +113,10 @@ sub mailbox_column
 {
 my ($user, $dom) = @_;
 my @t = &get_forwards($user->{'user'});
-return @t ? &html_escape(join(", ", @t)) : "";
+my $col = @t ? &html_escape(join(", ", @t)) : "";
+my (undef, $loop) = &forward_kind($user);
+$col .= ($col ? " " : "")."<b>".$text{'col_loop'}."</b>" if ($loop);
+return $col;
 }
 
 1;
