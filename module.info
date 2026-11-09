@@ -1,4 +1,4 @@
 desc=Authenticated Forwarding
 category=servers
 depends=virtual-server/7.0
-version=0.3.0
+version=0.1.0
