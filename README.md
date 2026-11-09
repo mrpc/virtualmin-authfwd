@@ -153,6 +153,13 @@ virtualmin migrate-authenticated-forwards [--domain example.com] [--apply]
 make test     # needs perl with Mail::DKIM
 ```
 
+## See also
+
+[OpenXS](https://github.com/mrpc/OpenXS) is an open-source exploit and malware
+scanner for Webmin servers, by the same author. Among other things it flags
+mail accounts whose SMTP login is being abused. When it is installed, the
+overview page of this plugin links to its mail accounts page.
+
 ## License
 
 GPL-3.0-or-later. See `LICENSE`.

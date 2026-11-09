@@ -49,3 +49,4 @@ index_openxs=Λογαριασμοί mail του OpenXS: κατάχρηση SMTP 
 index_dom_only=Εμφανίζεται μόνο το $1.
 index_dom_all=Εμφάνιση όλων των virtual servers
 mail_defaults=Προώθηση αυθεντικοποιημένου mail των νέων mailboxes σε
+index_openxs_get=scanner ανοιχτού κώδικα για exploits και malware σε servers με Webmin, που εντοπίζει και ανά λογαριασμό κατάχρηση των SMTP logins

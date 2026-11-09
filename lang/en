@@ -49,3 +49,4 @@ index_openxs=OpenXS mail accounts: SMTP login abuse per account
 index_dom_only=Showing only $1.
 index_dom_all=Show all virtual servers
 mail_defaults=Forward authenticated mail of new mailboxes to
+index_openxs_get=open-source exploit and malware scanner for Webmin servers, with per-account detection of abused SMTP logins

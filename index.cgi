@@ -115,10 +115,16 @@ else {
 	print $text{'index_nojournal'}, "<p>\n";
 	}
 
-# Related tool by the same author, when installed
+# Related tool by the same author: its page when installed, else where to get it
 if (&foreign_available("openxs")) {
 	print "<p>$text{'index_seealso'}: ",
 	      &ui_link("../openxs/mail_accounts.cgi", $text{'index_openxs'}), "\n";
+	}
+elsif (!&foreign_installed("openxs")) {
+	print "<p>$text{'index_seealso'}: ",
+	      &ui_link("https://github.com/mrpc/OpenXS", "OpenXS", undef,
+		       "target=_blank rel=noopener"),
+	      " - $text{'index_openxs_get'}\n";
 	}
 
 &ui_print_footer("/", $text{'index'});
