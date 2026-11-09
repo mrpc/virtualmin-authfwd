@@ -2,3 +2,4 @@ desc=Authenticated Forwarding
 category=servers
 depends=virtual-server/7.0
 version=0.1.0
+desc_el=Αυθεντικοποιημένη προώθηση

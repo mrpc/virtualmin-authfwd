@@ -59,7 +59,7 @@ The plugin also:
 
 - shows a warning on the Edit Mailbox page, and marks the mailbox list
   column, when the normal forwarding of a mailbox has this loop risk;
-- flags such mailboxes as `MAIL LOOP RISK` in `migrate-forwards.pl`, which
+- flags such mailboxes as `MAIL LOOP RISK` in `virtualmin migrate-authenticated-forwards`, which
   moves them over.
 
 ## Requirements
@@ -104,14 +104,38 @@ Mailboxes that already have "local copy + forward to external address" can be
 moved from the overview page, or all at once from the command line:
 
 ```
-cd /usr/share/webmin/virtualmin-authfwd   # /usr/libexec/webmin/... on RHEL
-./migrate-forwards.pl                 # list what would change
-./migrate-forwards.pl --apply         # move them
-./migrate-forwards.pl --domain example.com --apply
+virtualmin migrate-authenticated-forwards                 # list what would change
+virtualmin migrate-authenticated-forwards --apply         # move them
+virtualmin migrate-authenticated-forwards --domain example.com --apply
 ```
 
 Mailboxes that only forward, with no local copy, are left alone. The plugin
 needs a local delivery to hook into.
+
+## Command line
+
+The plugin adds these commands to `virtualmin` (see `virtualmin help <command>`):
+
+```
+virtualmin list-authenticated-forwards [--domain example.com] [--multiline]
+virtualmin set-authenticated-forward --domain example.com --user info --add someone@gmail.com
+virtualmin set-authenticated-forward --domain example.com --user info --remove someone@gmail.com
+virtualmin set-authenticated-forward --domain example.com --user info --clear
+virtualmin migrate-authenticated-forwards [--domain example.com] [--apply]
+```
+
+## More integration
+
+- Each virtual server with email gets an **Authenticated forwards** link in
+  its Virtualmin menu, which opens the overview page for that server only.
+- A virtual server's **New mailbox defaults** page has a field for addresses
+  that every new mailbox forwards authenticated mail to.
+- Moves done from the overview page are recorded in the Webmin Actions Log.
+- Webmin → Webmin Users → module access: "Can move mailboxes to authenticated
+  forwarding?" (allowed by default).
+- Module Config: location of the forwards file, and the hours of statistics
+  on the overview page.
+- English and Greek translations.
 
 ## Notes
 

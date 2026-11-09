@@ -1,7 +1,10 @@
 NAME    = virtualmin-authfwd
 VERSION = $(shell sed -n 's/^version=//p' module.info)
-FILES   = module.info authfwd authfwd-lib.pl virtual_feature.pl postinstall.pl \
-          uninstall.pl migrate-forwards.pl index.cgi migrate.cgi lang help LICENSE README.md
+FILES   = module.info CHANGELOG LICENSE README.md config config.info config.info.el \
+          defaultacl authfwd authfwd-lib.pl virtual_feature.pl postinstall.pl \
+          uninstall.pl log_parser.pl acl_security.pl index.cgi migrate.cgi \
+          list-authenticated-forwards.pl set-authenticated-forward.pl \
+          migrate-authenticated-forwards.pl lang help images
 
 # Builds a Webmin module package, installable from
 # Webmin -> Webmin Configuration -> Webmin Modules.

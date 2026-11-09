@@ -3,7 +3,7 @@
 # License: GPL-3.0-or-later
 use strict;
 use warnings;
-our (%text, $module_name);
+our (%text, $module_name, $module_config_directory);
 
 do 'authfwd-lib.pl';
 my $input_name = $module_name;
@@ -83,12 +83,67 @@ foreach my $k (keys %f) {
 return 1;
 }
 
+# feature_always_links(&domain) - link in the Virtualmin menu of a domain
+sub feature_always_links
+{
+my ($d) = @_;
+return ( ) if (!$d || !$d->{'mail'});
+return ( { 'mod' => $module_name,
+	   'desc' => $text{'links_link'},
+	   'page' => 'index.cgi?dom='.&urlize($d->{'id'}),
+	   'cat' => 'services',
+	 } );
+}
+
+# domain_defaults(&domain) -> addresses pre-filled for new mailboxes
+sub domain_defaults
+{
+my ($d) = @_;
+my %defs;
+&read_file("$module_config_directory/defaults.$d->{'id'}", \%defs);
+return split(/\s+/, $defs{'forwards'} || '');
+}
+
+# mailbox_defaults_inputs(&defaults, &domain) - on the "New mailbox
+# defaults" page of a domain
+sub mailbox_defaults_inputs
+{
+my ($defs, $d) = @_;
+return undef if (!$d || !$d->{'mail'});
+no warnings "once";
+$main::ui_table_cols = 2;
+use warnings "once";
+return &ui_table_row(&hlink($text{'mail_defaults'}, "targets"),
+		     &ui_textarea($input_name."_def",
+				  join("\n", &domain_defaults($d)), 3, 50));
+}
+
+# mailbox_defaults_parse(&defaults, &domain, &in)
+sub mailbox_defaults_parse
+{
+my ($defs, $d, $in) = @_;
+return undef if (!$d || !$d->{'mail'});
+return undef if (!defined($in->{$input_name."_def"}));
+my @t = &parse_addresses($in->{$input_name."_def"});
+foreach my $a (@t) {
+	$a =~ /^[^\s\@]+\@([A-Za-z0-9.-]+\.[A-Za-z]{2,})$/ ||
+		&error(&text('err_addr', &html_escape($a)));
+	&is_hosted_domain($1) &&
+		&error(&text('err_local', &html_escape($a)));
+	}
+my %defs;
+&read_file("$module_config_directory/defaults.$d->{'id'}", \%defs);
+$defs{'forwards'} = join(" ", @t);
+&write_file("$module_config_directory/defaults.$d->{'id'}", \%defs);
+return undef;
+}
+
 # mailbox_inputs(&user, new, &domain) - field on the Edit Mailbox page
 sub mailbox_inputs
 {
 my ($user, $new, $dom) = @_;
 return undef if (!$dom || !$dom->{'mail'});
-my @t = $new ? () : &get_forwards($user->{'user'});
+my @t = $new ? &domain_defaults($dom) : &get_forwards($user->{'user'});
 no warnings "once";
 $main::ui_table_cols = 2;	# themes divide by this; not always set yet
 use warnings "once";

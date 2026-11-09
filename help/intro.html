@@ -1,0 +1,15 @@
+<header>Authenticated Forwarding</header>
+This page lists every mailbox that forwards a copy of its mail through
+authenticated forwarding, and the mailboxes whose <i>normal</i> Virtualmin
+forwarding keeps a local copy and also sends to an external address.<p>
+
+Normal forwarding passes on everything, including spam with no DKIM
+signature, which Gmail, Outlook and Yahoo reject (<tt>550 5.7.26</tt>). Those
+rejections harm this server's reputation. For mailboxes whose Unix user name
+contains <tt>@</tt>, normal forwarding with a local copy also creates a mail
+loop. The <b>Move to authenticated forwarding</b> button switches a mailbox
+over without changing who receives legitimate mail.<p>
+
+Set or change the addresses of a mailbox on its Edit page in Virtualmin,
+under <b>Other access settings</b>.
+<footer>

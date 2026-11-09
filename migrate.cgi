@@ -8,6 +8,8 @@ require './authfwd-lib.pl';
 &error_setup($text{'mig_err'});
 &ReadParse();
 $ENV{'REQUEST_METHOD'} eq 'POST' || &error($text{'mig_epost'});
+my %access = &get_module_acl();
+$access{'migrate'} || &error($text{'mig_eacl'});
 &foreign_require("virtual-server", "virtual-server-lib.pl");
 
 my $d = &virtual_server::get_domain($in{'dom'});
@@ -19,4 +21,4 @@ $u || &error($text{'mig_euser'});
 my $err = &migrate_mailbox($d, $u);
 &error(&html_escape($err)) if ($err);
 &webmin_log("migrate", "mailbox", $u->{'user'}, { 'dom' => $d->{'dom'} });
-&redirect("");
+&redirect($in{'back'} ? "index.cgi?dom=".&urlize($in{'back'}) : "");

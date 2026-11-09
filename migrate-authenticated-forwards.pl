@@ -3,7 +3,7 @@ use strict;
 use warnings;
 our $module_name;
 
-=head1 migrate-forwards.pl
+=head1 migrate-authenticated-forwards.pl
 
 Moves existing "keep a local copy and forward" mailboxes to authenticated
 forwarding.
@@ -38,9 +38,9 @@ if (!$module_name) {
 	else {
 		chop($pwd = `pwd`);
 		}
-	$0 = "$pwd/migrate-forwards.pl";
+	$0 = "$pwd/migrate-authenticated-forwards.pl";
 	require './authfwd-lib.pl';
-	$< == 0 || die "migrate-forwards must be run as root\n";
+	$< == 0 || die "migrate-authenticated-forwards must be run as root\n";
 	}
 
 my ($apply, $only);
@@ -48,7 +48,7 @@ while (@ARGV) {
 	my $a = shift(@ARGV);
 	if ($a eq "--apply") { $apply = 1; }
 	elsif ($a eq "--domain") { $only = shift(@ARGV); }
-	else { die "usage: migrate-forwards.pl [--domain name] [--apply]\n"; }
+	else { die "usage: migrate-authenticated-forwards.pl [--domain name] [--apply]\n"; }
 	}
 
 my $err = &check_requirements();

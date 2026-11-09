@@ -1,0 +1,6 @@
+---- Changes since 0.0 ----
+First release. Adds a "Forward authenticated mail to" field to Virtualmin mailboxes: a copy is forwarded unless the sender is external and the message has no passing DKIM signature (mail that Gmail, Outlook and Yahoo reject as unauthenticated). The local copy is always delivered.
+Detects the "keep a local copy" forwarding loop of user@domain mailboxes and moves such mailboxes over, from the overview page or the command line.
+Overview page with all forwards, normal forwards worth moving, and 24-hour statistics.
+Forwards are included in Virtualmin backups and follow domain renames and deletions.
+Command-line tools: virtualmin list-authenticated-forwards, set-authenticated-forward, migrate-authenticated-forwards.

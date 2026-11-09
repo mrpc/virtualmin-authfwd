@@ -2,12 +2,19 @@
 # index.cgi - overview of authenticated forwarding on this server
 use strict;
 use warnings;
-our (%text, %in);
+our (%text, %in, %config);
 
 require './authfwd-lib.pl';
 &ReadParse();
 &foreign_require("virtual-server", "virtual-server-lib.pl");
-&ui_print_header(undef, $text{'index_title'}, "", undef, 1, 1);
+my %access = &get_module_acl();
+my $only = $in{'dom'} ? &virtual_server::get_domain($in{'dom'}) : undef;
+&ui_print_header($only ? &html_escape($only->{'dom'}) : undef,
+		 $text{'index_title'}, "", "intro", 1, 1);
+if ($only) {
+	print &text('index_dom_only', "<tt>".&html_escape($only->{'dom'})."</tt>"),
+	      " ", &ui_link("index.cgi", $text{'index_dom_all'}), "<p>\n";
+	}
 
 my $err = &check_requirements();
 print "<b>$text{'check_failed'}: $err</b><p>\n" if ($err);
@@ -15,9 +22,10 @@ print &ui_alert_box($text{'index_norecipe'}, 'warn')
 	if (!$err && scalar(&list_forwards()) && !&recipe_installed());
 
 # Map every mailbox to its domain; collect normal forwards worth moving.
-my %f = &list_forwards();
+my %f = $only ? &domain_forwards($only) : &list_forwards();
 my (%owner, @cands);
-foreach my $d (sort { $a->{'dom'} cmp $b->{'dom'} } &virtual_server::list_domains()) {
+my @doms = $only ? ( $only ) : &virtual_server::list_domains();
+foreach my $d (sort { $a->{'dom'} cmp $b->{'dom'} } @doms) {
 	next if (!$d->{'mail'});
 	foreach my $u (&virtual_server::list_domain_users($d, 0, 0, 1, 1)) {
 		foreach my $k (keys %f) {
@@ -58,7 +66,8 @@ print &ui_subheading($text{'index_cands'});
 if (@cands) {
 	print $text{'index_cands_desc'}, "<p>\n";
 	print &ui_columns_start([ $text{'index_dom'}, $text{'index_mbox'},
-				  $text{'index_targets'}, $text{'index_risk'}, "" ], 100);
+				  $text{'index_targets'}, $text{'index_risk'},
+				  $access{'migrate'} ? ( "" ) : ( ) ], 100);
 	foreach my $c (@cands) {
 		my ($d, $u, $loop, $ext) = @$c;
 		print &ui_columns_row([
@@ -66,11 +75,13 @@ if (@cands) {
 			&mailbox_link($d, $u),
 			&html_escape(join(", ", @$ext)),
 			$loop ? "<b>$text{'index_loop'}</b>" : $text{'index_spam'},
-			&ui_form_start("migrate.cgi", "post").
-			&ui_hidden("dom", $d->{'id'}).
-			&ui_hidden("user", $u->{'user'}).
-			&ui_submit($text{'index_move'}).
-			&ui_form_end() ]);
+			$access{'migrate'} ? (
+			  &ui_form_start("migrate.cgi", "post").
+			  &ui_hidden("dom", $d->{'id'}).
+			  &ui_hidden("user", $u->{'user'}).
+			  &ui_hidden("back", $only ? $only->{'id'} : "").
+			  &ui_submit($text{'index_move'}).
+			  &ui_form_end() ) : ( ) ]);
 		}
 	print &ui_columns_end();
 	}
@@ -79,10 +90,12 @@ else {
 	}
 
 # 3. What happened in the last 24 hours
-print &ui_subheading($text{'index_stats'});
+my $hours = $config{'stats_hours'} && $config{'stats_hours'} =~ /^\d+$/ ?
+		$config{'stats_hours'} : 24;
+print &ui_subheading(&text('index_stats', $hours));
 my $jc = &has_command("journalctl");
 if ($jc) {
-	my $out = &backquote_command("$jc -t authfwd --since -24h -o cat --no-pager 2>/dev/null");
+	my $out = &backquote_command("$jc -t authfwd --since -${hours}h -o cat --no-pager 2>/dev/null");
 	my (%n, %skipdom);
 	foreach my $l (split(/\n/, $out)) {
 		$n{$1}++ if ($l =~ /^(FWD|SKIP|FAIL) /);
@@ -100,6 +113,12 @@ if ($jc) {
 	}
 else {
 	print $text{'index_nojournal'}, "<p>\n";
+	}
+
+# Related tool by the same author, when installed
+if (&foreign_available("openxs")) {
+	print "<p>$text{'index_seealso'}: ",
+	      &ui_link("../openxs/mail_accounts.cgi", $text{'index_openxs'}), "\n";
 	}
 
 &ui_print_footer("/", $text{'index'});

@@ -1,0 +1,2 @@
+forwards_file=/etc/authfwd/forwards
+stats_hours=24
