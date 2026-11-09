@@ -27,7 +27,7 @@ my (%owner, @cands);
 my @doms = $only ? ( $only ) : &virtual_server::list_domains();
 foreach my $d (sort { $a->{'dom'} cmp $b->{'dom'} } @doms) {
 	next if (!$d->{'mail'});
-	foreach my $u (&virtual_server::list_domain_users($d, 0, 0, 1, 1)) {
+	foreach my $u (&virtual_server::list_domain_users($d, 0, 0, 0, 1)) {
 		foreach my $k (keys %f) {
 			$owner{$k} ||= [ $d, $u ] if (&key_matches_user($k, $u));
 			}
@@ -47,13 +47,14 @@ return &ui_link("../virtual-server/edit_user.cgi?dom=".&urlize($d->{'id'}).
 print &ui_subheading($text{'index_forwards'});
 if (%f) {
 	print &ui_columns_start([ $text{'index_dom'}, $text{'index_mbox'},
-				  $text{'index_targets'} ], 100);
+				  $text{'index_targets'}, $text{'index_quota'} ], 100);
 	foreach my $k (sort keys %f) {
 		my ($d, $u) = @{$owner{$k} || []};
 		print &ui_columns_row([
 			$d ? &html_escape($d->{'dom'}) : "<i>$text{'index_orphan'}</i>",
 			$d ? &mailbox_link($d, $u) : &html_escape($k),
-			&html_escape(join(", ", @{$f{$k}})) ]);
+			&html_escape(join(", ", @{$f{$k}})),
+			$u ? (&quota_warning($u) || $text{'quota_unlimited'}) : "" ]);
 		}
 	print &ui_columns_end();
 	}

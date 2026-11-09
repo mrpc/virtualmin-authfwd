@@ -225,6 +225,33 @@ foreach my $u (&virtual_server::list_domain_users($d, 0, 1, 1, 1)) {
 return %rv;
 }
 
+# quota_info(&user) -> (used bytes, limit bytes), or () when the mailbox has
+# no home quota. The user must come from list_domain_users with quotas.
+sub quota_info
+{
+my ($u) = @_;
+&foreign_require("virtual-server", "virtual-server-lib.pl");
+return () if (!&virtual_server::has_home_quotas());
+my $limit = $u->{'quota'};
+return () if (!$limit);
+my $bs = &virtual_server::quota_bsize("home") || 1024;
+return (($u->{'uquota'} || 0) * $bs, $limit * $bs);
+}
+
+# quota_warning(&user) -> HTML warning about the mailbox quota, or undef.
+# A full mailbox defers and finally bounces mail, forwarded copies included,
+# because procmail only forwards while it can also deliver the local copy.
+sub quota_warning
+{
+my ($u) = @_;
+my ($used, $limit) = &quota_info($u);
+return undef if (!$limit);
+my $pct = int($used * 100 / $limit);
+return $pct >= 80 ?
+	"<b>".&text('quota_near', &nice_size($used), &nice_size($limit), $pct)."</b>" :
+	&text('quota_limited', &nice_size($limit));
+}
+
 # is_hosted_domain(domain) -> 1 if Virtualmin hosts this domain
 sub is_hosted_domain
 {
