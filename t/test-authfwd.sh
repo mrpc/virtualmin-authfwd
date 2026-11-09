@@ -37,6 +37,9 @@ msg "x@other.invalid" "DKIM-Signature: v=1; a=rsa-sha256; d=other.invalid; s=s; 
     check "external sender, invalid DKIM -> skip" "SKIP" box@example.org
 msg "spammer@spam.invalid" "" | check "mailbox without forwards -> nothing" "" nobody@example.org
 
+# Virtualmin may deliver user@domain mailboxes to the Unix user user-domain.
+msg "spammer@spam.invalid" "" | check "dash-form LOGNAME matches user@domain entry" "SKIP" box-example.org
+
 # The loop guard drops the hosted target; with only hosted targets nothing happens.
 printf 'only@example.org loop@example.org\n' > "$tmp/forwards"
 msg "" "" | check "only hosted targets -> nothing (loop guard)" "" only@example.org

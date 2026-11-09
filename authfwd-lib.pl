@@ -79,7 +79,7 @@ sub recipe_lines
 my $awk = &has_command("awk") || "/usr/bin/awk";
 return ( $mark_begin." (do not edit; managed by the plugin)",
 	 ":0c",
-	 "* ? $awk -v u=\"\$LOGNAME\" '\$1==u{f=1} END{exit !f}' $forwards_file",
+	 "* ? $awk -v u=\"\$LOGNAME\" '{k=\$1; gsub(\"@\",\"-\",k)} \$1==u||k==u{f=1} END{exit !f}' $forwards_file",
 	 "| $module_root_directory/authfwd",
 	 $mark_end );
 }

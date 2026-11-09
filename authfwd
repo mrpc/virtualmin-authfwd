@@ -79,15 +79,22 @@ sub decide {
     return '';
 }
 
+# Mailboxes are stored under their Virtualmin name (user@domain). Virtualmin
+# delivers some of them to a Unix user with "@" replaced by "-", which is what
+# procmail sees as LOGNAME, so that form matches too (exact match wins).
 sub targets_for {
     my ($file, $u) = @_;
     open my $c, '<', $file or return ();
-    while (<$c>) {
-        next if /^\s*(#|$)/;
-        my ($k, @t) = split;
-        return @t if defined $k && $k eq $u;
+    my @dash;
+    while (my $l = <$c>) {
+        next if $l =~ /^\s*(#|$)/;
+        my ($k, @t) = split ' ', $l;
+        next unless defined $k;
+        return @t if $k eq $u;
+        (my $kd = $k) =~ tr/@/-/;
+        @dash = @t if $kd eq $u && !@dash;
     }
-    return ();
+    return @dash;
 }
 
 # Domains this Postfix server delivers for: mydestination plus the domain
