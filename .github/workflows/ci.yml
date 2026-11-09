@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Perl Mail::DKIM
+        run: sudo apt-get update && sudo apt-get install -y libmail-dkim-perl
+      - name: Decision tests
+        run: make test
+      - name: Syntax-check the forwarding script
+        run: perl -c authfwd
+      # The module files need WebminCore, which only exists inside Webmin;
+      # a stub lets perl compile them. Real UI checks: see CONTRIBUTING.md.
+      - name: Syntax-check the Webmin module files
+        run: |
+          for f in *.pl *.cgi; do perl -It/stub -c "$f" || exit 1; done
+      - name: Build the package
+        run: make dist && ls -l *.wbm.gz

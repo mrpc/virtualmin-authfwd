@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # No package manager files: the plugin uses only Perl modules from the
+  # distribution. The only pinned external versions are the GitHub Actions.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

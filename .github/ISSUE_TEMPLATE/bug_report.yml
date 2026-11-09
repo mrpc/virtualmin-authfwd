@@ -1,0 +1,44 @@
+name: Bug report
+description: Something is not working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security issue?** Do not file it here. See [SECURITY.md](../blob/main/.github/SECURITY.md)
+        for private reporting.
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: The `version=` line of `/usr/share/webmin/virtualmin-authfwd/module.info` (or `/usr/libexec/webmin/...`)
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS/distro, Webmin and Virtualmin versions, mail server (Postfix version)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected instead, and the exact error message if there is one
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: For example `journalctl -t authfwd`, or the matching lines from the Postfix mail log. Replace real email addresses and domains if you prefer.
+      render: shell
+    validations:
+      required: false

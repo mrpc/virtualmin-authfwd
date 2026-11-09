@@ -1,5 +1,8 @@
 # virtualmin-authfwd
 
+[![CI](https://github.com/mrpc/virtualmin-authfwd/actions/workflows/ci.yml/badge.svg)](https://github.com/mrpc/virtualmin-authfwd/actions/workflows/ci.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 A small Virtualmin plugin that forwards a copy of a mailbox's mail to external
 addresses **without forwarding spam that the receiver would reject anyway**.
 
