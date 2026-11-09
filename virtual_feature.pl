@@ -151,6 +151,8 @@ my $warn = "";
 if (!$new) {
 	my ($local, $loop, @ext) = &forward_kind($user);
 	$warn = "<br><b>".$text{'warn_loop'}."</b>" if ($loop);
+	my $qw = (@t || $local) ? &quota_warning($user) : undef;
+	$warn .= "<br>".$qw if ($qw);
 	$warn .= "<br>".&text('warn_plain', &html_escape(join(", ", @ext)))
 		if ($local && @ext && !$loop);
 	}

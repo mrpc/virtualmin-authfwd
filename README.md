@@ -147,6 +147,10 @@ virtualmin migrate-authenticated-forwards [--domain example.com] [--apply]
   twice.
 - Addresses in domains hosted on the same server are refused. Use a normal
   forward for those.
+- Remove the quota of a forwarding mailbox, or keep it well above its use.
+  A full mailbox defers and finally bounces new mail, and the forwarded copy
+  is not sent either. The plugin warns about quotas on the Edit Mailbox page,
+  on the overview page, and in `migrate-authenticated-forwards`.
 - Forwards are stored in `/etc/authfwd/forwards`, one line per mailbox:
   `<unix user> <address> ...`.
 

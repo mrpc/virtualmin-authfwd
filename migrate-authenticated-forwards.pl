@@ -62,13 +62,18 @@ die "No matching virtual servers with email\n" if (!@doms);
 
 my $count = 0;
 foreach my $d (@doms) {
-	foreach my $u (&virtual_server::list_domain_users($d, 0, 0, 1, 1)) {
+	foreach my $u (&virtual_server::list_domain_users($d, 0, 0, 0, 1)) {
 		my ($local, $loop, @ext) = &forward_kind($u);
 		next if (!$local || !@ext);
 		$count++;
 		print "$d->{'dom'}\t$u->{'user'}\t", join(", ", @ext),
 		      ($loop ? "\tMAIL LOOP RISK" : ""),
 		      ($apply ? "\tmigrating" : ""), "\n";
+		my $qw = &quota_warning($u);
+		if ($qw) {
+			$qw =~ s/<[^>]+>//g;
+			print "  NOTE: $qw\n";
+			}
 		next if (!$apply);
 		my $merr = &migrate_mailbox($d, $u);
 		print "  WARNING: $merr\n" if ($merr);

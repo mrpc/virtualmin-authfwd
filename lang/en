@@ -50,3 +50,7 @@ index_dom_only=Showing only $1.
 index_dom_all=Show all virtual servers
 mail_defaults=Forward authenticated mail of new mailboxes to
 index_openxs_get=open-source exploit and malware scanner for Webmin servers, with per-account detection of abused SMTP logins
+index_quota=Mailbox quota
+quota_unlimited=Unlimited
+quota_limited=This mailbox has a quota of $1. If it fills up, new mail is deferred and finally bounced back to the sender, and the forwarded copy is not sent either. Consider removing the quota.
+quota_near=This mailbox is $3% full ($1 of $2). When it is full, new mail is deferred and finally bounced back to the sender, and the forwarded copy is not sent either. Raise or remove the quota now.

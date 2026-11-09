@@ -1,3 +1,5 @@
+---- Changes since 0.1.0 ----
+Warns about mailbox quotas: a full mailbox defers and finally bounces new mail, and the forwarded copy is not sent either. The Edit Mailbox page shows the quota (in bold from 80% full), the overview page has a "Mailbox quota" column, and migrate-authenticated-forwards prints a note for mailboxes with a quota.
 ---- Changes since 0.0 ----
 First release. Adds a "Forward authenticated mail to" field to Virtualmin mailboxes: a copy is forwarded unless the sender is external and the message has no passing DKIM signature (mail that Gmail, Outlook and Yahoo reject as unauthenticated). The local copy is always delivered.
 Detects the "keep a local copy" forwarding loop of user@domain mailboxes and moves such mailboxes over, from the overview page or the command line.
