@@ -70,20 +70,10 @@ foreach my $d (@doms) {
 		      ($loop ? "\tMAIL LOOP RISK" : ""),
 		      ($apply ? "\tmigrating" : ""), "\n";
 		next if (!$apply);
-		my @t = &get_forwards($u->{'user'});
-		my %have = map { lc($_), 1 } @t;
-		&set_forwards($u->{'user'}, [ @t, grep { !$have{lc $_} } @ext ]);
-		foreach my $a (@ext) {
-			my $out = &backquote_command(
-				"virtualmin modify-user --domain ".quotemeta($d->{'dom'}).
-				" --user ".quotemeta($u->{'user'}).
-				" --del-forward ".quotemeta($a)." 2>&1");
-			print "  WARNING: removing $a from the Virtualmin forward failed: $out"
-				if ($?);
-			}
+		my $merr = &migrate_mailbox($d, $u);
+		print "  WARNING: $merr\n" if ($merr);
 		}
 	}
-&install_recipe() if ($apply && $count && !&recipe_installed());
 print $count ? ($apply ? "Migrated $count mailbox(es).\n"
 		       : "$count mailbox(es) can be migrated; run again with --apply.\n")
 	     : "Nothing to migrate.\n";

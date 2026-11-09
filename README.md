@@ -81,10 +81,27 @@ On first use the plugin adds a small block to the top of `/etc/procmailrc`,
 between `# BEGIN virtualmin-authfwd` and `# END virtualmin-authfwd`.
 Uninstalling the module removes that block.
 
+## Overview page
+
+Webmin → Servers → **Authenticated Forwarding** shows:
+
+- every configured authenticated forward, with a link to its mailbox;
+- mailboxes whose *normal* forwarding keeps a local copy and sends to an
+  external address, marked "Mail loop" or "Forwards spam", each with a
+  **Move to authenticated forwarding** button;
+- the last 24 hours: messages forwarded, not forwarded and failed, plus the
+  top sender domains that were not forwarded.
+
+## Backups
+
+The forwards of a virtual server are included in its Virtualmin backups and
+come back on restore. They also follow a domain rename, and they are removed
+when the domain is deleted.
+
 ## Moving existing forwards
 
 Mailboxes that already have "local copy + forward to external address" can be
-moved over in one step:
+moved from the overview page, or all at once from the command line:
 
 ```
 cd /usr/share/webmin/virtualmin-authfwd   # /usr/libexec/webmin/... on RHEL

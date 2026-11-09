@@ -170,6 +170,61 @@ $loop = $loop ? 1 : 0;
 return ($local ? 1 : 0, $loop, @ext);
 }
 
+# migrate_mailbox(&domain, &user) -> undef on success, or an error message.
+# Moves the external targets of the mailbox's normal forwarding (which must
+# also keep a local copy) to authenticated forwarding.
+sub migrate_mailbox
+{
+my ($d, $u) = @_;
+my ($local, $loop, @ext) = &forward_kind($u);
+return $text{'mig_enothing'} if (!$local || !@ext);
+my @t = &get_forwards($u->{'user'});
+my %have = map { lc($_), 1 } @t;
+# Add first, then remove: a failure leaves a duplicate, never a lost forward.
+&set_forwards($u->{'user'}, [ @t, grep { !$have{lc $_} } @ext ]);
+&install_recipe() if (!&recipe_installed());
+my @errs;
+foreach my $a (@ext) {
+	my $out = &backquote_command(
+		"virtualmin modify-user --domain ".quotemeta($d->{'dom'}).
+		" --user ".quotemeta($u->{'user'}).
+		" --del-forward ".quotemeta($a)." 2>&1");
+	push(@errs, &text('mig_edel', $a, $out)) if ($?);
+	}
+return @errs ? join(" ", @errs) : undef;
+}
+
+# key_matches_user(key, &user) - a forwards key belongs to this mailbox
+sub key_matches_user
+{
+my ($k, $u) = @_;
+return 1 if ($k eq $u->{'user'});
+(my $kd = $k) =~ tr/@/-/;
+(my $ud = $u->{'user'}) =~ tr/@/-/;
+return $kd eq $ud;
+}
+
+# domain_forwards(&domain) -> hash of key => [ addresses ] for its mailboxes.
+# Matches user@domain keys by suffix, and other user names via
+# the domain's mailbox list (when the mailboxes still exist).
+sub domain_forwards
+{
+my ($d) = @_;
+my %f = &list_forwards();
+my %rv;
+my $dn = $d->{'dom'};
+foreach my $k (keys %f) {
+	$rv{$k} = $f{$k} if ($k =~ /^[^\@]+\@\Q$dn\E$/i);
+	}
+&foreign_require("virtual-server", "virtual-server-lib.pl");
+foreach my $u (&virtual_server::list_domain_users($d, 0, 1, 1, 1)) {
+	foreach my $k (keys %f) {
+		$rv{$k} = $f{$k} if (&key_matches_user($k, $u));
+		}
+	}
+return %rv;
+}
+
 # is_hosted_domain(domain) -> 1 if Virtualmin hosts this domain
 sub is_hosted_domain
 {

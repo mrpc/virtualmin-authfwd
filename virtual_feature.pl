@@ -28,6 +28,61 @@ sub feature_check
 return &check_requirements();
 }
 
+# feature_always_backup(&domain, file, ...) - save this domain's forwards
+# into every domain backup (this plugin is not a per-domain feature).
+sub feature_always_backup
+{
+my ($d, $file) = @_;
+my %f = &domain_forwards($d);
+my $fh = "BACKUP";
+&open_tempfile($fh, ">$file");
+foreach my $k (sort keys %f) {
+	&print_tempfile($fh, join(" ", $k, @{$f{$k}}), "\n");
+	}
+&close_tempfile($fh);
+return 1;
+}
+
+# feature_always_restore(&domain, file, ...) - put the forwards back
+sub feature_always_restore
+{
+my ($d, $file) = @_;
+my $lref = &read_file_lines($file, 1);
+my $any = 0;
+foreach my $l (@$lref) {
+	my ($k, @t) = split(/\s+/, $l);
+	next if (!defined($k) || !@t);
+	&set_forwards($k, \@t);
+	$any++;
+	}
+&unflush_file_lines($file);
+&install_recipe() if ($any && !&recipe_installed());
+return 1;
+}
+
+# feature_always_delete(&domain) - drop the forwards of a deleted domain
+sub feature_always_delete
+{
+my ($d) = @_;
+my %f = &domain_forwards($d);
+&set_forwards($_, [ ]) foreach (keys %f);
+return 1;
+}
+
+# feature_always_modify(&domain, &olddomain) - follow a domain rename
+sub feature_always_modify
+{
+my ($d, $oldd) = @_;
+return 1 if (!$oldd || lc($d->{'dom'}) eq lc($oldd->{'dom'}));
+my ($o, $n) = ($oldd->{'dom'}, $d->{'dom'});
+my %f = &list_forwards();
+foreach my $k (keys %f) {
+	next if ($k !~ /^([^\@]+)\@\Q$o\E$/i);
+	&rename_forwards($k, "$1\@$n");
+	}
+return 1;
+}
+
 # mailbox_inputs(&user, new, &domain) - field on the Edit Mailbox page
 sub mailbox_inputs
 {
